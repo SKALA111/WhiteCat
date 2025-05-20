@@ -41,7 +41,7 @@ embedding_dim = embeddings.shape[1]
 index = faiss.IndexFlatL2(embedding_dim)
 index.add(np.array(embeddings))
 
-# 5. (선택) 원본 텍스트도 저장
+# 5. 원본 텍스트도 저장
 with open("phishing_texts.pkl", "wb") as f:
     pickle.dump(phishing_data, f)
 
