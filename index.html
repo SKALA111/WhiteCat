@@ -152,9 +152,9 @@
           const score = result.similarity_score;
 
           let detectionResult = '';
-          if (score <= 0.4) {
+          if (score <= 0.3) {
             detectionResult = '✅ 정상';
-          } else if (score <= 0.8) {
+          } else if (score <= 0.7) {
             detectionResult = '⚠️ 의심';
           } else {
             detectionResult = '🚨 위험';
@@ -164,7 +164,6 @@
             <strong>음성 텍스트:</strong><br>${result.text}<br><br>
             <strong>유사도 점수:</strong> ${score.toFixed(2)}<br>
             <strong>탐지 결과:</strong> ${detectionResult}<br>
-            <strong>유사 문장:</strong><br>${result.matched_example}
           `;
         } catch (error) {
           resultDiv.innerHTML = '❌ 오류: 서버에 연결할 수 없습니다.';
