@@ -1,85 +1,121 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>보이스피싱 탐지</title>
+  <title>보이스피싱 탐지 - 수신화면</title>
   <style>
     html, body {
       margin: 0;
       padding: 0;
       width: 100vw;
       height: 100vh;
-      font-family: 'Arial', sans-serif;
-      background: #1c1c1c;
-      color: white;
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #000;
+      color: #fff;
       display: flex;
       justify-content: center;
       align-items: center;
     }
+
     .container {
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       max-width: 400px;
+      padding: 40px 20px;
+      box-sizing: border-box;
       display: flex;
       flex-direction: column;
-      justify-content: center;
       align-items: center;
-      padding: 20px;
-      box-sizing: border-box;
+      justify-content: space-between;
     }
+
+    .top-text {
+      text-align: center;
+      font-size: 18px;
+      color: #aaa;
+      margin-top: 20px;
+    }
+
     .phone-number {
-      font-size: 24px;
-      margin-bottom: 30px;
+      font-size: 28px;
+      font-weight: bold;
+      margin-top: 10px;
+      color: #fff;
     }
+
     .profile-icon {
-      width: 120px;
-      height: 120px;
+      width: 160px;
+      height: 160px;
       border-radius: 50%;
       background: #333;
-      margin: 0 auto 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 64px;
+      color: #888;
+      margin: 40px 0;
     }
+
     .button-row {
       display: flex;
       justify-content: space-around;
       width: 100%;
-      margin-top: 40px;
+      max-width: 280px;
+      margin-bottom: 30px;
     }
+
     .call-btn {
-      width: 60px;
-      height: 60px;
+      width: 70px;
+      height: 70px;
       border-radius: 50%;
       border: none;
-      font-size: 24px;
+      font-size: 28px;
       color: white;
+      cursor: pointer;
+      transition: transform 0.2s ease;
+      display: flex;
+      justify-content: center;
+      align-items: center;
     }
+
+    .call-btn:active {
+      transform: scale(0.95);
+    }
+
     .green {
       background-color: #4caf50;
     }
+
     .red {
       background-color: #f44336;
     }
+
     #result {
-      margin-top: 20px;
-      text-align: left;
-      background: #fff;
-      color: black;
-      padding: 10px;
-      border-radius: 8px;
+      background: rgba(255,255,255,0.95);
+      color: #111;
+      padding: 16px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.5;
       width: 100%;
       box-sizing: border-box;
+      margin-bottom: 20px;
+      display: none;
     }
+
   </style>
 </head>
 <body>
   <div class="container">
+    <div class="top-text">전화 수신 중...</div>
     <div class="phone-number">031 - 220 - 9031</div>
-    <div class="profile-icon"></div>
-    <div class="button-row">
-      <button id="startBtn" class="call-btn green">📞</button>
-      <button id="stopBtn" class="call-btn red" disabled>📴</button>
-    </div>
+    <div class="profile-icon">👤</div>
     <div id="result"></div>
+    <div class="button-row">
+      <button id="startBtn" class="call-btn green" title="통화 시작">📞</button>
+      <button id="stopBtn" class="call-btn red" title="통화 종료" disabled>❌</button>
+    </div>
   </div>
 
   <script>
@@ -103,31 +139,36 @@
         const formData = new FormData();
         formData.append('file', audioBlob, 'audio.webm');
 
-        resultDiv.innerHTML = '분석 중...';
+        resultDiv.style.display = 'block';
+        resultDiv.innerHTML = '🔍 분석 중...';
 
-        const response = await fetch('http://127.0.0.1:8000/analyze-audio/', {
-          method: 'POST',
-          body: formData
-        });
+        try {
+          const response = await fetch('http://127.0.0.1:8000/analyze-audio/', {
+            method: 'POST',
+            body: formData
+          });
 
-        const result = await response.json();
-        const score = result.similarity_score;
+          const result = await response.json();
+          const score = result.similarity_score;
 
-        let detectionResult = '';
-        if (score <= 40) {
-          detectionResult = '✅ 정상';
-        } else if (score <= 80) {
-          detectionResult = '⚠️ 의심';
-        } else {
-          detectionResult = '🚨 위험';
+          let detectionResult = '';
+          if (score <= 40) {
+            detectionResult = '✅ 정상';
+          } else if (score <= 80) {
+            detectionResult = '⚠️ 의심';
+          } else {
+            detectionResult = '🚨 위험';
+          }
+
+          resultDiv.innerHTML = `
+            <strong>음성 텍스트:</strong><br>${result.text}<br><br>
+            <strong>유사도 점수:</strong> ${score.toFixed(2)}<br>
+            <strong>탐지 결과:</strong> ${detectionResult}<br>
+            <strong>유사 문장:</strong><br>${result.matched_example}
+          `;
+        } catch (error) {
+          resultDiv.innerHTML = '❌ 오류: 서버에 연결할 수 없습니다.';
         }
-
-        resultDiv.innerHTML = `
-          <strong>음성 텍스트:</strong> ${result.text}<br>
-          <strong>유사도 점수:</strong> ${score.toFixed(2)}<br>
-          <strong>탐지 결과:</strong> ${detectionResult}<br>
-          <strong>유사 문장:</strong> ${result.matched_example}
-        `;
 
         audioChunks = [];
       };
