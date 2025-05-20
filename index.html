@@ -111,11 +111,21 @@
         });
 
         const result = await response.json();
+        const score = result.similarity_score;
+
+        let detectionResult = '';
+        if (score <= 40) {
+          detectionResult = '✅ 정상';
+        } else if (score <= 80) {
+          detectionResult = '⚠️ 의심';
+        } else {
+          detectionResult = '🚨 위험';
+        }
 
         resultDiv.innerHTML = `
           <strong>음성 텍스트:</strong> ${result.text}<br>
-          <strong>유사도 점수:</strong> ${result.similarity_score.toFixed(2)}<br>
-          <strong>탐지 결과:</strong> ${result.phishing_detected ? '⚠️ 보이스피싱 의심' : '✅ 정상'}<br>
+          <strong>유사도 점수:</strong> ${score.toFixed(2)}<br>
+          <strong>탐지 결과:</strong> ${detectionResult}<br>
           <strong>유사 문장:</strong> ${result.matched_example}
         `;
 
