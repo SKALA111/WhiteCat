@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>보이스피싱 탐지</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100vw;
+      height: 100vh;
+      font-family: 'Arial', sans-serif;
+      background: #1c1c1c;
+      color: white;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      width: 100vw;
+      height: 100vh;
+      max-width: 400px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .phone-number {
+      font-size: 24px;
+      margin-bottom: 30px;
+    }
+    .profile-icon {
+      width: 120px;
+      height: 120px;
+      border-radius: 50%;
+      background: #333;
+      margin: 0 auto 40px;
+    }
+    .button-row {
+      display: flex;
+      justify-content: space-around;
+      width: 100%;
+      margin-top: 40px;
+    }
+    .call-btn {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      border: none;
+      font-size: 24px;
+      color: white;
+    }
+    .green {
+      background-color: #4caf50;
+    }
+    .red {
+      background-color: #f44336;
+    }
+    #result {
+      margin-top: 20px;
+      text-align: left;
+      background: #fff;
+      color: black;
+      padding: 10px;
+      border-radius: 8px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="phone-number">031 - 220 - 9031</div>
+    <div class="profile-icon"></div>
+    <div class="button-row">
+      <button id="startBtn" class="call-btn green">📞</button>
+      <button id="stopBtn" class="call-btn red" disabled>📴</button>
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    let mediaRecorder;
+    let audioChunks = [];
+
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const resultDiv = document.getElementById('result');
+
+    startBtn.onclick = async () => {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      mediaRecorder = new MediaRecorder(stream);
+
+      mediaRecorder.ondataavailable = event => {
+        audioChunks.push(event.data);
+      };
+
+      mediaRecorder.onstop = async () => {
+        const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'audio.webm');
+
+        resultDiv.innerHTML = '분석 중...';
+
+        const response = await fetch('http://127.0.0.1:8000/analyze-audio/', {
+          method: 'POST',
+          body: formData
+        });
+
+        const result = await response.json();
+
+        resultDiv.innerHTML = `
+          <strong>음성 텍스트:</strong> ${result.text}<br>
+          <strong>유사도 점수:</strong> ${result.similarity_score.toFixed(2)}<br>
+          <strong>탐지 결과:</strong> ${result.phishing_detected ? '⚠️ 보이스피싱 의심' : '✅ 정상'}<br>
+          <strong>유사 문장:</strong> ${result.matched_example}
+        `;
+
+        audioChunks = [];
+      };
+
+      mediaRecorder.start();
+      startBtn.disabled = true;
+      stopBtn.disabled = false;
+    };
+
+    stopBtn.onclick = () => {
+      mediaRecorder.stop();
+      startBtn.disabled = false;
+      stopBtn.disabled = true;
+    };
+  </script>
+</body>
+</html>
