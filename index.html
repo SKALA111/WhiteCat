@@ -152,9 +152,9 @@
           const score = result.similarity_score;
 
           let detectionResult = '';
-          if (score <= 40) {
+          if (score <= 0.4) {
             detectionResult = '✅ 정상';
-          } else if (score <= 80) {
+          } else if (score <= 0.8) {
             detectionResult = '⚠️ 의심';
           } else {
             detectionResult = '🚨 위험';
