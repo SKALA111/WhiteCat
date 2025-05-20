@@ -1,3 +1,6 @@
+import zipfile
+import os
+import glob
 from sentence_transformers import SentenceTransformer
 import faiss
 import numpy as np
