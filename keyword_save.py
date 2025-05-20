@@ -34,7 +34,7 @@ phishing_data = [
 ]
 
 # 3. 문장 임베딩
-embeddings = model.encode(phishing_data)
+embeddings = model.encode(phishing_data, convert_to_numpy=True)
 
 # 4. FAISS 벡터 인덱스 생성
 embedding_dim = embeddings.shape[1]
