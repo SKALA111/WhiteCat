@@ -53,11 +53,19 @@ async def analyze_audio(file: UploadFile = File(...)):
 
         # 문장 임베딩 후 FAISS 검색
         embedding = embed_model.encode([text], convert_to_numpy=True)
-        D, I = index.search(embedding, k=1)  # 가장 가까운 문장 1개
-        similarity = D[0][0]  # L2 거리 (낮을수록 유사)
-        threshold = 1.0  # 임계값 조절 가능
 
-        phishing_detected = similarity < threshold
+        # 인덱스에서 가장 가까운 벡터 찾기 (L2 거리 기반)
+        D, I = index.search(embedding, k=1)  # 가장 가까운 문장 1개
+        matched_embedding = index.reconstruct(int(I[0][0]))
+
+        # 코사인 유사도 함수 정의
+        def cosine_similarity(a, b):
+            return np.dot(a, b) / (np.linalg.norm(a) * np.linalg.norm(b))
+
+        similarity = cosine_similarity(embedding[0], matched_embedding)
+
+        threshold = 0.7  # 코사인 유사도 기준값, 필요에 따라 조절하세요
+        phishing_detected = similarity > threshold
 
         return AnalyzeResult(
             text=text,
